@@ -1,0 +1,97 @@
+---
+- hosts: etcdtest
+  become: True
+  tasks:
+
+    - name: "Create a etcd service"
+      copy:
+        src: files/etcd.service
+        remote_src: False
+        dest: /etc/systemd/system/etcd.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "Stop the etcd service"
+      command: systemctl stop etcd
+
+    - name: "Create a data directory"
+      file:
+        path: /var/lib/etcd/{{ inventory_hostname }}.etcd
+        state: "{{ item }}"
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - absent
+        - directory
+
+    - name: "Create a data directory"
+      file:
+        path: /var/lib/etcd/{{ inventory_hostname }}.etcd
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: "Create directory for etcd configuration"
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - /etc/etcd
+        - /etc/etcd/ssl
+
+    - name: "Copy over the CA certificate"
+      copy:
+        src: ./artifacts/ca.crt
+        remote_src: False
+        dest: /etc/etcd/ssl/ca.crt
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "Copy over the `etcd` member certificate"
+      copy:
+        src: ./artifacts/{{inventory_hostname}}.crt
+        remote_src: False
+        dest: /etc/etcd/ssl/server.crt
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: "Copy over the `etcd` member key"
+      copy:
+        src: ./artifacts/{{inventory_hostname}}.key
+        remote_src: False
+        dest: /etc/etcd/ssl/server.key
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: "Create configuration file for etcd"
+      template:
+        src: templates/etcd.conf.yaml.j2
+        dest: /etc/etcd/etcd.conf.yaml
+        owner: root
+        group: root
+        mode: 0600
+        
+    - name: line insert
+      lineinfile:
+        path: /etc/environment
+        line: 'export ETCDCTL_API=3'
+        line: 'export ETCDCTL_ENDPOINTS=https://192.168.10.24:2379,https://192.168.10.145:2379,https://192.168.10.231:2379'
+        line: 'export ETCDCTL_CACERT=/etc/etcd/ssl/ca.crt'
+        line: 'export ETCDCTL_CERT=/etc/etcd/ssl/server.crt'
+        line: 'export ETCDCTL_KEY=/etc/etcd/ssl/server.key'
+        insertbefore: EOF
+
+    - name: "Enable the etcd service"
+      command: systemctl enable etcd
+
+    - name: "Start the etcd service"
+      command: systemctl restart etcd
