@@ -1,0 +1,34 @@
+---
+  - name: Include secure-password
+    include_vars:
+      file: "../defaults/secure.yml"
+
+  - name: Create users
+    user:
+      state: present  
+      name: "{{ item.name }}"
+      groups: "sudo"
+      shell: "/bin/bash"
+      password: "{{ user_password | password_hash('sha512') }}"
+      update_password: always
+    become: yes
+    become_user: root
+    loop: "{{ users }}"
+
+  - name: Create authorised keys
+    authorized_key:
+      state: present  
+      user: "{{ item.name }}"
+      key: "{{ lookup('file', 'files/id_rsa_' + item.name + '.pub') }}"
+    loop: "{{ users }}"
+
+
+  - name: Configure sudo rules
+    lineinfile:
+      state: present  
+      path: "/etc/sudoers"
+      regexp: "^%sudo"
+      line: "sudo ALL=(ALL) NOPASSWD: ALL"
+      validate: '/usr/sbin/visudo -cf %s'
+    become: yes
+    become_user: root
