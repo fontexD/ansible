@@ -1,0 +1,12 @@
+---
+docker_gogkey: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+docker_service: docker
+
+repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+
+docker_packages:
+  - docker-ce=5:20.10.10~3-0~ubuntu-focal
+  - containerd.io
+
+
