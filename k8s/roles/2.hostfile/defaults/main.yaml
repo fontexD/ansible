@@ -1,3 +1,0 @@
----
-hosts_file: "/etc/hosts"
-hosts_template: "templates/hosts.j2"

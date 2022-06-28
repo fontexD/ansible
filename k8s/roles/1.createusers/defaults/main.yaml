@@ -1,3 +1,0 @@
-users:
-  - name: k8smaster
-    password: "defined in secure.yml as user_password"

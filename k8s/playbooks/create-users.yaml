@@ -1,8 +1,0 @@
----
-- name: Create users and groups
-  hosts: k8s
-  remote_user: master
-  gather_facts: yes
-  roles:
-    - 1.createusers
-...
